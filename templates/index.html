@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Wellness</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h2>Welcome {{ session['user'] }}</h2>
+<a href="{{ url_for('logout') }}">Logout</a>
+
+<h3>Add Weekly Log</h3>
+<form method="POST" action="{{ url_for('add_log') }}">
+    Date: <input type="date" name="date" required><br>
+    Sleep hours: <input type="number" step="0.1" name="sleep" required><br>
+    Study hours: <input type="number" step="0.1" name="study" required><br>
+    Screen time hours: <input type="number" step="0.1" name="screen" required><br>
+    Physical activity hours: <input type="number" step="0.1" name="physical" required><br>
+    Mood (1-10): <input type="number" min="1" max="10" name="mood" required><br>
+    Stress (1-10): <input type="number" min="1" max="10" name="stress" required><br>
+    <input type="submit" value="Add Log">
+</form>
+
+<h3>Weekly Logs</h3>
+<table border="1">
+<tr><th>Date</th><th>Sleep</th><th>Study</th><th>Screen</th><th>Physical</th><th>Mood</th><th>Stress</th><th>Burnout %</th></tr>
+{% for log in logs %}
+<tr>
+<td>{{ log.date }}</td><td>{{ log.sleep }}</td><td>{{ log.study }}</td><td>{{ log.screen }}</td>
+<td>{{ log.physical }}</td><td>{{ log.mood }}</td><td>{{ log.stress }}</td><td>{{ log.burnout }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h3>Burnout Graph (Last Week)</h3>
+<canvas id="burnoutChart" width="400" height="200"></canvas>
+<script>
+const ctx = document.getElementById('burnoutChart').getContext('2d');
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ dates|tojson }},
+        datasets: [{ label: 'Burnout %', data: {{ burnout_percents|tojson }}, borderColor: 'red', fill: false }]
+    },
+    options: { scales: { y: { beginAtZero: true, max: 100 } } }
+});
+</script>
+</body>
+</html>
