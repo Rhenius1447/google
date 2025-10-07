@@ -1,48 +1,97 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Student Wellness</title>
+    <title>Student Wellness Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #ffecd2, #fcb69f);
+            margin: 0;
+            padding: 20px;
+        }
+        h2 { text-align: center; color: #333; }
+        a { text-decoration: none; color: #333; float: right; }
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 600px;
+            margin: 20px auto;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        form input { width: 100%; padding: 10px; margin: 5px 0; border-radius: 10px; border: 1px solid #ccc; }
+        form input[type="submit"] { background: #ff7e5f; color: white; font-weight: bold; cursor: pointer; border: none; }
+        .feedback { text-align: center; margin: 20px; font-size: 18px; font-weight: bold; color: #ff3d00; }
+        .logs-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 20px; }
+        .log-card {
+            background: #fff;
+            padding: 15px;
+            border-radius: 15px;
+            width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .log-card:hover { transform: scale(1.05); }
+        .log-card h4 { margin: 5px 0; color: #ff7e5f; }
+        canvas { max-width: 600px; margin: 40px auto; display: block; }
+    </style>
 </head>
 <body>
+
 <h2>Welcome {{ session['user'] }}</h2>
 <a href="{{ url_for('logout') }}">Logout</a>
 
-<h3>Add Weekly Log</h3>
+{% if feedback_msg %}
+<div class="feedback">{{ feedback_msg }}</div>
+{% endif %}
+
 <form method="POST" action="{{ url_for('add_log') }}">
-    Date: <input type="date" name="date" required><br>
-    Sleep hours: <input type="number" step="0.1" name="sleep" required><br>
-    Study hours: <input type="number" step="0.1" name="study" required><br>
-    Screen time hours: <input type="number" step="0.1" name="screen" required><br>
-    Physical activity hours: <input type="number" step="0.1" name="physical" required><br>
-    Mood (1-10): <input type="number" min="1" max="10" name="mood" required><br>
-    Stress (1-10): <input type="number" min="1" max="10" name="stress" required><br>
+    <h3>Add Weekly Log</h3>
+    <input type="date" name="date" required>
+    <input type="number" step="0.1" name="sleep" placeholder="Sleep Hours" required>
+    <input type="number" step="0.1" name="study" placeholder="Study Hours" required>
+    <input type="number" step="0.1" name="screen" placeholder="Screen Time Hours" required>
+    <input type="number" step="0.1" name="physical" placeholder="Physical Activity Hours" required>
+    <input type="number" min="1" max="10" name="mood" placeholder="Mood (1-10)" required>
+    <input type="number" min="1" max="10" name="stress" placeholder="Stress Level (1-10)" required>
     <input type="submit" value="Add Log">
 </form>
 
-<h3>Weekly Logs</h3>
-<table border="1">
-<tr><th>Date</th><th>Sleep</th><th>Study</th><th>Screen</th><th>Physical</th><th>Mood</th><th>Stress</th><th>Burnout %</th></tr>
+<div class="logs-container">
 {% for log in logs %}
-<tr>
-<td>{{ log.date }}</td><td>{{ log.sleep }}</td><td>{{ log.study }}</td><td>{{ log.screen }}</td>
-<td>{{ log.physical }}</td><td>{{ log.mood }}</td><td>{{ log.stress }}</td><td>{{ log.burnout }}</td>
-</tr>
+<div class="log-card">
+    <h4>{{ log.date }}</h4>
+    <p>Sleep: {{ log.sleep }}h</p>
+    <p>Study: {{ log.study }}h</p>
+    <p>Screen: {{ log.screen }}h</p>
+    <p>Physical: {{ log.physical }}h</p>
+    <p>Mood: {{ log.mood }}/10</p>
+    <p>Stress: {{ log.stress }}/10</p>
+    <p>Burnout: {{ log.burnout }}%</p>
+</div>
 {% endfor %}
-</table>
+</div>
 
-<h3>Burnout Graph (Last Week)</h3>
-<canvas id="burnoutChart" width="400" height="200"></canvas>
+<canvas id="burnoutChart"></canvas>
 <script>
 const ctx = document.getElementById('burnoutChart').getContext('2d');
 const chart = new Chart(ctx, {
     type: 'line',
     data: {
         labels: {{ dates|tojson }},
-        datasets: [{ label: 'Burnout %', data: {{ burnout_percents|tojson }}, borderColor: 'red', fill: false }]
+        datasets: [{
+            label: 'Burnout %',
+            data: {{ burnout_percents|tojson }},
+            borderColor: '#ff3d00',
+            backgroundColor: 'rgba(255, 125, 95, 0.2)',
+            fill: true,
+            tension: 0.4
+        }]
     },
     options: { scales: { y: { beginAtZero: true, max: 100 } } }
 });
 </script>
+
 </body>
 </html>

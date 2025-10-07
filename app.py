@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from datetime import datetime
 import os
 
@@ -20,6 +21,14 @@ def calculate_burnout(log):
     percent = max(0, min(100, round(score, 1)))
     return percent
 
+def feedback_message(percent):
+    if percent >= 70:
+        return "Great! Keep up the healthy balance 💪"
+    elif percent >= 40:
+        return "Moderate burnout. Try to rest and manage stress 😌"
+    else:
+        return "High burnout! Please take care and rest 🛌"
+
 @app.route('/')
 def home():
     if 'user' not in session:
@@ -28,7 +37,8 @@ def home():
     logs = user_logs.get(username, [])
     burnout_percents = [log['burnout'] for log in logs]
     dates = [log['date'] for log in logs]
-    return render_template('index.html', logs=logs, dates=dates, burnout_percents=burnout_percents)
+    msg = session.pop('feedback_msg', '')
+    return render_template('index.html', logs=logs, dates=dates, burnout_percents=burnout_percents, feedback_msg=msg)
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -71,6 +81,7 @@ def add_log():
            'physical': physical, 'mood': mood, 'stress': stress}
     log['burnout'] = calculate_burnout(log)
     user_logs[username].append(log)
+    session['feedback_msg'] = feedback_message(log['burnout'])
     return redirect(url_for('home'))
 
 @app.route('/logout')
